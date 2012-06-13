@@ -17,4 +17,4 @@ if app_name =~ /[^a-z]/
 end
 
 template_path = File.expand_path(File.join(__FILE__, '../../lib/template.rb'))
-System.exec "rails new #{app_name} -d postgresql -m #{template_path}"
+exec "rails new #{app_name} -d postgresql -m #{template_path}"
