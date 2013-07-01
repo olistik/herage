@@ -13,11 +13,11 @@ A Ruby on Rails application generator tailored to a very opinionated set of (pro
 * Rails 4.0
 * Heroku Toolbelt
 
+In development it uses sqlite3.
+
 ## Installation
 
     $ gem install herage
-
-* by default it uses the username "olistik" and the blank password to acces the database. It's likely going to change in the next releases. ^_^
 
 ## Usage
 
