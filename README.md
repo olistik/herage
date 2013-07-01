@@ -1,17 +1,17 @@
 # Herage
 
-A RubyonRails application generator tailored to a very opinionated set of requirements:
+A Ruby on Rails application generator tailored to a very opinionated set of (production) requirements:
 
 * postgres
 * foreman
-* thin
+* unicorn
 * haml
-* twitter bootstrap
 
 ## Requirements
 
-* Postgres server
-* Heroku gem
+* Ruby 2.0
+* Rails 4.0
+* Heroku Toolbelt
 
 ## Installation
 
