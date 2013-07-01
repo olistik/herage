@@ -7,32 +7,62 @@ git :init
 git add: "."
 git commit: "-a -m 'Genesis'"
 
-insert_into_file 'Gemfile', "ruby '1.9.3'\n", after: "source 'https://rubygems.org'\n"
+insert_into_file 'Gemfile', "ruby '2.0.0'\n", after: "source 'https://rubygems.org'\n"
 
-gem 'heroku'
+gsub_file 'Gemfile', /.*sqlite.*/, "\n"
+
+gem_group :production do
+  gem 'pg'
+  gem 'rails_12factor'
+  gem 'unicorn'
+end
+
 gem 'foreman'
-gem 'thin'
 gem 'haml-rails'
-gem 'twitter-bootstrap-rails', git: 'git://github.com/seyhunak/twitter-bootstrap-rails.git', branch: 'static'
+
 gem_group :development do
   gem 'pry'
+  gem 'sqlite3'
 end
+
 # removes comments from the Gemfile
 gsub_file 'Gemfile', /# .*\n/, ''
 # removes empty lines
 gsub_file 'Gemfile', /\s+\n/, "\n"
 gsub_file 'Gemfile', /\n+/, "\n"
 
-run 'bundle install --local'
-run 'rbenv rehash'
+run 'bundle install --without production'
 
 remove_file 'public/index.html'
 git rm: 'public/index.html'
 generate(:controller, 'home index')
 route "root :to => 'home#index'"
 
+create_file 'Procfile', 'web: bundle exec unicorn -p $PORT -c ./config/unicorn.rb'
 
-create_file 'Procfile', 'web:    bundle exec thin start -p $PORT'
+create_file 'config/unicorn.rb' do
+  <<-eos
+worker_processes 1
+timeout 30
+preload_app true
+before_fork do |server, worker|
+ Signal.trap 'TERM' do
+ puts 'Unicorn master intercepting TERM and sending myself QUIT instead'
+ Process.kill 'QUIT', Process.pid
+ end
+ defined?(ActiveRecord::Base) and
+ ActiveRecord::Base.connection.disconnect!
+end
+after_fork do |server, worker|
+ Signal.trap 'TERM' do
+ puts 'Unicorn worker intercepting TERM and doing nothing. Wait for master to
+sent QUIT'
+ end
+ defined?(ActiveRecord::Base) and
+ ActiveRecord::Base.establish_connection
+end
+  eos
+end
 
 create_file '.env', ''
 
@@ -42,8 +72,6 @@ append_file '.gitignore' do
 .DS_Store
   eos
 end
-
-gsub_file 'config/database.yml', /(username: ).+$/, '\1olistik'
 
 rake "db:create", env: 'development'
 rake "db:create", env: 'test'
@@ -83,7 +111,6 @@ create_file 'app/assets/javascripts/application.js' do
   <<-eos
 //= require jquery
 //= require jquery_ujs
-//= require bootstrap
 //= require_tree .
   eos
 end
@@ -94,7 +121,6 @@ create_file 'app/assets/stylesheets/application.css' do
 /*
  * the top of the compiled file, but it's generally better to create a new file per style scope.
  *= require_self
- *= require bootstrap
  *= require_tree .
 */
   eos
@@ -130,13 +156,13 @@ ____
 License
 -------
 
-Copyright (c) 2012 Maurizio de Magnis. Distributed under the MIT License. See LICENSE.txt for further details.
+Copyright (c) 2013 Maurizio de Magnis. Distributed under the MIT License. See LICENSE.txt for further details.
   eos
 end
 
 create_file 'LICENSE.txt' do
   <<-eos
-Copyright (c) 2012 Maurizio De Magnis
+Copyright (c) 2013 Maurizio De Magnis
 
 Permission is hereby granted, free of charge, to any person obtaining
 a copy of this software and associated documentation files (the
@@ -162,6 +188,6 @@ end
 git add: "."
 git commit: "-a -m 'Setup'"
 
-run "heroku apps:create --stack cedar #{app_name}"
+run "heroku apps:create #{app_name}"
 run 'git push heroku master'
 run 'heroku run rake db:migrate'

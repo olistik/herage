@@ -1,12 +1,26 @@
 #!/usr/bin/env ruby
 
-require 'herage'
 require 'fileutils'
 
 app_name = ARGV[0]
 
 if app_name.nil?
   puts "Usage:\nherage <app_name>"
+  exit
+end
+
+if `which ruby` == '' || !`ruby --version`.include?('2.0')
+  puts "Please install Ruby 2.0 first (for example: http://rvm.io/)"
+  exit
+end
+
+if `which rails` == '' || !`rails --version`.include?('4.0')
+  puts "Please install Rails 4.0 first (gem install rails -v 4.0)"
+  exit
+end
+
+if `which heroku` == '' || !`heroku version`.include?('heroku-toolbelt')
+  puts "Please install the Heroku Toolbelt first: https://toolbelt.heroku.com/"
   exit
 end
 
@@ -17,4 +31,4 @@ if app_name =~ /[^a-z]/
 end
 
 template_path = File.expand_path(File.join(__FILE__, '../../lib/template.rb'))
-exec "rails new #{app_name} -d postgresql -m #{template_path}"
+exec "rails new #{app_name} -m #{template_path}"
